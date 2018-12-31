@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="icon" href="../../public/img/favicon.ico" th:href="@{/img/favicon.ico}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/css/bootstrap.css}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/css/styles.css}"/>
+    <script src="../../public/js/forum-scripts.js" th:src="@{/js/forum-scripts.js}"></script>
+    <title>Users</title>
+</head>
+<body>
+
+<header th:replace="layout :: site-header" ></header>
+
+<main id="activeUsers">
+    <article th:each="u, iter : ${mostActiveUsers}">
+        <p th:text="${iter.count}" style="padding-left: 15%"></p>
+        <h5 th:text="${u.username}" style="padding-left: 20%"></h5>
+        <h6 th:text="${u.fullName}" style="padding-left: 20%"></h6>
+        <p th:text="${u.email}" style="padding-left: 20%"></p>
+    </article>
+</main>
+
+<footer th:replace="layout :: site-footer"></footer>
+
+<script type="text/javascript" th:src="@{/js/jquery-3.3.1.js/}"></script>
+<script type="text/javascript" th:src="@{/js/bootstrap.js}"></script>
+
+</body>
+</html>

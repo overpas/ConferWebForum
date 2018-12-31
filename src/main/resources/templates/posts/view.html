@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: site-head">
+    <title th:text="${post.title}">View Post</title>
+    <link rel="stylesheet" type="text/css" th:href="@{/css/bootstrap.css}"/>
+    <script src="/static/js/jquery-ui.js"></script>
+    <script src="../../public/js/forum-scripts.js" th:src="@{/js/forum-scripts.js}"></script>
+    <script src='https://www.google.com/recaptcha/api.js'></script>
+</head>
+<body th:with="basePost=${post}">
+
+<header th:replace="layout :: site-header"/>
+
+<div th:fragment="comment-view(post)" style="background-color: #eeeeee; border: solid #5784FF 2px">
+    <h5 class="title" th:text="${post.title}">Post Title</h5>
+    <div class="date">
+        <i>Posted on</i>
+        <span th:text="${#dates.format(post.date, 'dd-MMM-yyyy')}">22-May-2016</span>
+        <span th:if="${post.author}" th:remove="tag">
+        <i>by</i>
+        <span th:text="${post.author.fullName != null ?
+                         post.author.fullName : post.author.username}">Svetlin Nakov</span>
+        </span>
+    </div>
+    <p class="content" th:utext="${post.body}">Post content</p>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var replyTo = /*[[${post.id}]]*/ 'null';
+        var mainPostId = /*[[${basePost.id}]]*/ 'null';
+
+        function openReplyWindow(postId) {
+            var currentuser = /*[[${#httpServletRequest.remoteUser}]]*/ 'null';
+            console.log(mainPostId);
+            if (currentuser == null) {
+                location.href = "/posts/view/" + mainPostId + "/unauthorized";
+            }
+            console.log(postId);
+            replyTo = postId;
+            document.getElementById("reply").style.display = "inline";
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        /*]]>*/
+    </script>
+    <button id="btn-open-reply-window" th:onclick="'javascript:openReplyWindow(' + ${post.id} + ')'">Reply</button>
+</div>
+
+<div id="posts" th:fragment="post-content(post)" th:remove="tag">
+    <ul th:with="allReplies=${@postServiceJpaImpl.findAllReplies(post.id)}"
+        th:if="${not #lists.isEmpty(allReplies)}">
+        <li th:each="reply : ${allReplies}">
+            <div th:include="posts/view :: comment-view(post=${reply})"></div>
+            <div th:replace="posts/view :: post-content(post=${reply})" th:remove="tag"></div>
+        </li>
+    </ul>
+</div>
+
+<div class="reply" id="reply" style="display: none">
+    <div style="text-align: center; background-color: #5784FF; color: white">REPLY</div>
+    <div style="display: block">
+        <input style="width: 100%" type="text" name="reply-title" id="reply-title" placeholder="Title"/>
+    </div>
+    <div id="comment-wrapper" style="">
+        <textarea name="comment" id="reply-to-post" placeholder="Comment"
+                  style="min-height: 60px; height: 120px; width: 100%; resize: none;"></textarea>
+    </div>
+    <style type="text/css">
+        .reply-buttons:active {
+            background-color: #a5a5a5;
+        }
+    </style>
+    <script type="text/javascript">
+        function closeReplyWindow() {
+            document.getElementById("reply").style.display = "none";
+        }
+
+        function postReply() {
+            $.post("/posts/view/" + replyTo + "/reply",
+                {replyText: $("#reply-to-post").val(),
+                    replyTitle: $("#reply-title").val(),
+                    basePostId: mainPostId,
+                    recaptcha: grecaptcha.getResponse()})
+                .done(function (data) {
+                    console.log("reply to " + replyTo);
+                    closeReplyWindow();
+                    location.reload();
+                });
+        }
+    </script>
+
+    <div class="recaptcha-wrapper" style="text-align: center">
+        <div class="g-recaptcha" th:attr="data-sitekey=${@recaptchaConfig.getSite()}"
+             style="margin-top: 20px; margin-bottom: 10px; display: inline-block">
+        </div>
+    </div>
+
+    <div style="text-align: center; background-color: #5784FF; color: white; display: flex;">
+        <button class="reply-buttons" style="width: 100%; flex: 1; border: 2px solid #4CAF50;" onclick="postReply()">
+            Send
+        </button>
+    </div>
+</div>
+
+<footer th:replace="layout :: site-footer"/>
+
+<script type="text/javascript" th:src="@{/js/jquery-3.3.1.js/}"></script>
+<script type="text/javascript" th:src="@{/js/bootstrap.js}"></script>
+
+</body>
+</html>
